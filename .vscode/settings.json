@@ -1,0 +1,4 @@
+{
+  "prettier.configPath": "package.json",
+  "prettier.prettierPath": "node_modules/prettier/index.cjs"
+}
