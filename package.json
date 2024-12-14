@@ -1,0 +1,63 @@
+{
+  "name": "todo-elm-architecture",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "cra-template": "1.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-scripts": "5.0.1"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "check": "npm-run-all test lint",
+    "test": "bun test --preload ./bunTestConfig.ts",
+    "lint": "npm-run-all --aggregate-output --parallel lint:tsc lint:prettier",
+    "lint:tsc": "tsc --noEmit",
+    "lint:prettier": "prettier . --check",
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^15.11.7",
+    "@jest/globals": "^29.7.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^14.0.0",
+    "@types/bun": "^1.1.14",
+    "@types/react": "18.2.20",
+    "@types/react-dom": "^18.0.6",
+    "autoprefixer": "^10.4.20",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.4.49",
+    "prettier": "^3.4.1",
+    "tailwindcss": "^3.4.16",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.7.2"
+  },
+  "prettier": {
+    "printWidth": 120,
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
+  }
+}
