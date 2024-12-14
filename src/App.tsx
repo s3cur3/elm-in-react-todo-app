@@ -1,18 +1,16 @@
-import React, { useState } from 'react'
+import React from 'react'
 import './App.css'
 import { applyAction, initialize, makeSideEffectExecutor, SideEffect } from './ToDo/todo'
 import { useMVUReducer } from './mvuReducer'
+import { TrashIcon } from '@heroicons/react/20/solid'
 
 function App() {
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [editText, setEditText] = useState('')
-
   const syncWithServer = async (_message: SideEffect) => {
     return { success: true as const }
   }
 
   const [state, dispatch] = useMVUReducer(initialize, applyAction, makeSideEffectExecutor(syncWithServer))
-  const { items } = state
+  const { items, editingId } = state
 
   const toggleTodo = (id: number) => {
     dispatch({ action: 'toggle-complete', id })
@@ -21,25 +19,11 @@ function App() {
   const addTodo = () => {
     const id = Date.now()
     dispatch({ action: 'add-item', text: '' })
-    setEditingId(id)
-    setEditText('')
+    dispatch({ action: 'start-edit', id })
   }
 
-  const updateTodo = (id: number, text: string) => {
-    dispatch({ action: 'update-text', id, text })
-  }
-
-  const handleEdit = (id: number, text: string) => {
-    setEditingId(id)
-    setEditText(text)
-  }
-
-  const handleSubmit = (id: number) => {
-    if (editText.trim()) {
-      updateTodo(id, editText.trim())
-    }
-    setEditingId(null)
-    setEditText('')
+  const handleEdit = (id: number) => {
+    dispatch({ action: 'start-edit', id })
   }
 
   return (
@@ -71,27 +55,34 @@ function App() {
                         <form
                           onSubmit={(e) => {
                             e.preventDefault()
-                            handleSubmit(item.id)
+                            dispatch({ action: 'end-edit' })
                           }}
-                          className="flex-1 flex gap-2"
+                          className="flex-1"
                         >
                           <input
                             type="text"
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            onBlur={() => handleSubmit(item.id)}
+                            value={item.text}
+                            onChange={(e) => dispatch({ action: 'update-text', id: item.id, text: e.target.value })}
+                            onBlur={() => dispatch({ action: 'end-edit' })}
                             autoFocus
-                            className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </form>
                       ) : (
                         <span
-                          onClick={() => handleEdit(item.id, item.text)}
+                          onClick={() => handleEdit(item.id)}
                           className={`flex-1 cursor-pointer ${item.completed ? 'line-through text-gray-400' : ''}`}
                         >
                           {item.text || '(Click to edit)'}
                         </span>
                       )}
+                      <button
+                        onClick={() => dispatch({ action: 'remove-item', id: item.id })}
+                        className="p-1 hover:bg-gray-200 rounded-full"
+                        type="button"
+                      >
+                        <TrashIcon className="w-4 h-4 text-gray-500 hover:text-red-500" />
+                      </button>
                     </li>
                   ))}
                 </ul>

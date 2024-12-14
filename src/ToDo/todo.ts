@@ -8,14 +8,24 @@ export interface Todo {
 
 export type State = {
   items: Todo[]
+  editingId?: number
 }
 
 type AddItemAction = { action: 'add-item'; text: string }
-type UpdateTextAction = { action: 'update-text'; id: number; text: string }
 type ToggleCompleteAction = { action: 'toggle-complete'; id: number }
 type RemoveItemAction = { action: 'remove-item'; id: number }
+type StartEditAction = { action: 'start-edit'; id: number }
+type UpdateTextAction = { action: 'update-text'; id: number; text: string }
+type EndEditAction = { action: 'end-edit' }
 
-export type Action = AddItemAction | UpdateTextAction | ToggleCompleteAction | RemoveItemAction
+export type Action =
+  | AddItemAction
+  | ToggleCompleteAction
+  | RemoveItemAction
+  | StartEditAction
+  | UpdateTextAction
+  | EndEditAction
+
 export type Dispatch = (action: Action) => void
 
 type UpdateItemEffect = { action: 'update-item'; id: number; text: string; completed: boolean }
@@ -43,9 +53,6 @@ export function applyAction(state: State, action: Action): Update<State, SideEff
       return [{ ...state, items: [...state.items, newItem] }, []]
     }
 
-    case 'update-text':
-      return [updateItem(state, action.id, { text: action.text }), []]
-
     case 'toggle-complete': {
       const item = state.items.find((i) => i.id === action.id)
 
@@ -60,6 +67,15 @@ export function applyAction(state: State, action: Action): Update<State, SideEff
         },
         [],
       ]
+
+    case 'start-edit':
+      return [{ ...state, editingId: action.id }, []]
+
+    case 'update-text':
+      return [updateItem(state, action.id, { text: action.text }), []]
+
+    case 'end-edit':
+      return [{ ...state, editingId: undefined }, []]
   }
 }
 
