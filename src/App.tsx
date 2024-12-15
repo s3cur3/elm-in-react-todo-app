@@ -2,14 +2,24 @@ import React from 'react'
 import './App.css'
 import { applyAction, initialize, makeSideEffectExecutor, SideEffect } from './ToDo/todo'
 import { useMVUReducer } from './mvuReducer'
-import { TrashIcon } from '@heroicons/react/20/solid'
+import { TrashIcon, PlusIcon } from '@heroicons/react/20/solid'
 
 function App() {
-  const syncWithServer = async (_message: SideEffect) => {
-    return { success: true as const }
+  const syncWithServer = async (message: SideEffect) => {
+    try {
+      localStorage.setItem('todos', JSON.stringify(message.items))
+      return { success: true as const }
+    } catch (error) {
+      console.error('Failed to sync with localStorage:', error)
+      return { success: false, error: String(error) }
+    }
   }
 
-  const [state, dispatch] = useMVUReducer(initialize, applyAction, makeSideEffectExecutor(syncWithServer))
+  const [state, dispatch] = useMVUReducer(
+    () => initialize(JSON.parse(localStorage.getItem('todos') || '[]')),
+    applyAction,
+    makeSideEffectExecutor(syncWithServer)
+  )
   const { items, editingId } = state
 
   const toggleTodo = (id: number) => {
@@ -27,68 +37,69 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
-      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
-          <div className="max-w-md mx-auto">
-            <div className="divide-y divide-gray-200">
-              <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                <h1 className="text-2xl font-bold mb-8">Todo List</h1>
-
-                <button
-                  onClick={addTodo}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  Add
-                </button>
-
-                <ul className="space-y-2">
-                  {items.map((item) => (
-                    <li key={item.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
-                      <input
-                        type="checkbox"
-                        checked={item.completed}
-                        onChange={() => toggleTodo(item.id)}
-                        className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      {editingId === item.id ? (
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault()
-                            dispatch({ action: 'end-edit' })
-                          }}
-                          className="flex-1"
-                        >
-                          <input
-                            type="text"
-                            value={item.text}
-                            onChange={(e) => dispatch({ action: 'update-text', id: item.id, text: e.target.value })}
-                            onBlur={() => dispatch({ action: 'end-edit' })}
-                            autoFocus
-                            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </form>
-                      ) : (
-                        <span
-                          onClick={() => handleEdit(item.id)}
-                          className={`flex-1 cursor-pointer ${item.completed ? 'line-through text-gray-400' : ''}`}
-                        >
-                          {item.text || '(Click to edit)'}
-                        </span>
-                      )}
-                      <button
-                        onClick={() => dispatch({ action: 'remove-item', id: item.id })}
-                        className="p-1 hover:bg-gray-200 rounded-full"
-                        type="button"
-                      >
-                        <TrashIcon className="w-4 h-4 text-gray-500 hover:text-red-500" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+    <div className="min-h-screen bg-zinc-900 text-zinc-100 py-6 px-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-medium">Tasks</h1>
+            <button
+              onClick={addTodo}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 text-zinc-100 text-sm rounded-md hover:bg-zinc-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-zinc-500"
+            >
+              <PlusIcon className="w-4 h-4" />
+              New Task
+            </button>
           </div>
+
+          <ul className="space-y-1">
+            {items.map((item) => (
+              <li
+                key={item.id}
+                className="group flex items-center gap-3 p-2 hover:bg-zinc-800/50 rounded-md transition-colors duration-150"
+              >
+                <input
+                  type="checkbox"
+                  checked={item.completed}
+                  onChange={() => toggleTodo(item.id)}
+                  className="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-zinc-900"
+                />
+                {editingId === item.id ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      dispatch({ action: 'end-edit' })
+                    }}
+                    className="flex-1"
+                  >
+                    <input
+                      type="text"
+                      value={item.text}
+                      onChange={(e) => dispatch({ action: 'update-text', id: item.id, text: e.target.value })}
+                      onBlur={() => dispatch({ action: 'end-edit' })}
+                      autoFocus
+                      className="w-full px-2 py-1 bg-zinc-800 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                  </form>
+                ) : (
+                  <span
+                    onClick={() => handleEdit(item.id)}
+                    className={`flex-1 cursor-pointer ${
+                      item.completed ? 'line-through text-zinc-500' : 'text-zinc-100'
+                    }`}
+                  >
+                    {item.text || '(Click to edit)'}
+                  </span>
+                )}
+                <button
+                  onClick={() => dispatch({ action: 'remove-item', id: item.id })}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-700 rounded-md transition-all duration-150"
+                  type="button"
+                >
+                  <TrashIcon className="w-4 h-4 text-zinc-400 hover:text-red-400" />
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

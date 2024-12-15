@@ -28,13 +28,10 @@ export type Action =
 
 export type Dispatch = (action: Action) => void
 
-type UpdateItemEffect = { action: 'update-item'; id: number; text: string; completed: boolean }
-type AddItemEffect = { action: 'add-item'; text: string }
+export type SideEffect = { action: 'sync'; items: Todo[] }
 
-export type SideEffect = UpdateItemEffect | AddItemEffect
-
-export function initialize(): [State, SideEffect[]] {
-  return [{ items: [] }, []]
+export function initialize(existingTodos: Todo[] = []): [State, SideEffect[]] {
+  return [{ items: existingTodos }, []]
 }
 
 const updateItem = (state: State, id: number, update: Partial<Todo>): State => ({
@@ -50,29 +47,29 @@ export function applyAction(state: State, action: Action): Update<State, SideEff
         text: action.text,
         completed: false,
       }
-      return [{ ...state, items: [...state.items, newItem] }, []]
+      const newState = { ...state, items: [...state.items, newItem] }
+      return [newState, [{ action: 'sync', items: newState.items }]]
     }
 
     case 'toggle-complete': {
       const item = state.items.find((i) => i.id === action.id)
-
-      return [updateItem(state, action.id, { completed: !item?.completed }), []]
+      const completed = !item?.completed
+      const newState = updateItem(state, action.id, { completed })
+      return [newState, [{ action: 'sync', items: newState.items }]]
     }
 
-    case 'remove-item':
-      return [
-        {
-          ...state,
-          items: state.items.filter((item) => item.id !== action.id),
-        },
-        [],
-      ]
+    case 'remove-item': {
+      const newState = { ...state, items: state.items.filter((item) => item.id !== action.id) }
+      return [newState, [{ action: 'sync', items: newState.items }]]
+    }
+
+    case 'update-text': {
+      const newState = updateItem(state, action.id, { text: action.text })
+      return [newState, [{ action: 'sync', items: newState.items }]]
+    }
 
     case 'start-edit':
       return [{ ...state, editingId: action.id }, []]
-
-    case 'update-text':
-      return [updateItem(state, action.id, { text: action.text }), []]
 
     case 'end-edit':
       return [{ ...state, editingId: undefined }, []]
